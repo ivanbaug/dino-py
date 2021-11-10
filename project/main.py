@@ -1,87 +1,52 @@
-from PIL.Image import TRANSPOSE
-from PIL.ImageOps import grayscale
-import win32api
 import pyautogui
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as SelService
+from selenium.common.exceptions import InvalidSessionIdException, WebDriverException
 
-# apr_region = (0, 167, 520, 345)
-apr_region = (127, 290, 123, 73)
-
-pix_loc = (155, 325)
+# Setup selenium
+chrome_driver_path = "C:\\ChromeDriver\\chromedriver.exe"
+# webpg = "chrome://dino" # window resize doesn't work
+webpg = "https://elgoog.im/t-rex/"
+jump_count = 0
 pix_color = (83, 83, 83)
 
-dinos = [
-    "project\\img\\dino01.png",
-    "project\\img\\dino02.png",
-    "project\\img\\dino03.png",
-]
-cacti = [
-    "project\\img\\cactus01.png",
-    "project\\img\\cactus02.png",
-    "project\\img\\cactus03.png",
-    "project\\img\\cactus04.png",
-]
-
-x, yold = pix_loc
-
-ys = [335, 325, 315]
+# May make the response a little slower but i like the feedback
+def mjump():
+    global jump_count
+    pyautogui.press("up")
+    jump_count += 1
+    print(f"jump #{jump_count}")
 
 
-for dino in dinos:
-    dino_pos = pyautogui.locateOnScreen(
-        dino, region=apr_region, grayscale=True, confidence=0.7
-    )
-    if dino_pos != None:
-        dino_x, dino_y, w, h = dino_pos
-        win32api.SetCursorPos((dino_x, dino_y))
-    else:
-        print("dino not found")
-# dino_x = 30
+def run():
+    s = SelService(chrome_driver_path)
+    browser = webdriver.Chrome(service=s)
+    browser.get(webpg)
+    browser.set_window_size(1000, 800)
+    # weird x offset
+    browser.set_window_position(-10, 0)
+
+    # Run the game
+    ## First jump
+    time.sleep(2)
+    mjump()
+
+    while True:
+        if pyautogui.pixelMatchesColor(360, 450, pix_color):
+            mjump()
+        # if second cactus gets too close
+        if pyautogui.pixelMatchesColor(290, 450, pix_color):
+            mjump()
+
+        try:
+            _ = browser.window_handles
+        except (InvalidSessionIdException, WebDriverException) as e:
+            break
+
+    browser.quit()
+    print("The game is over")
 
 
-# while True:
-#     # dino_x = 30
-#     # dino_y = 0
-#     # cacti_x = []
-#     # cacti_y = []
-#     pix = pyautogui.pixelMatchesColor(170, 335, pix_color)
-#     if pix:
-#         print("jump!")
-#         pyautogui.press("up")
-#     # else:
-#     #     # Bird
-#     #     bird = pyautogui.pixelMatchesColor(155, 291, pix_color)
-#     #     if bird:
-#     #         print("duck!")
-#     #         pyautogui.keyDown("down")
-#     #         time.sleep(0.5)
-#     #         pyautogui.keyUp("down")
-
-#     # for y in ys:
-#     #     pix = pyautogui.pixelMatchesColor(x, y, pix_color)
-#     #     if pix:
-#     #         print("jump!")
-#     #         pyautogui.press("up")
-
-#     # Single dino position
-#     # for dino in dinos:
-#     #     dino_pos = pyautogui.locateOnScreen(
-#     #         dino, region=apr_region, grayscale=True, confidence=0.8
-#     #     )
-#     #     if dino_pos != None:
-#     #         dino_x, dino_y, w, h = dino_pos
-#     #         print(dino_x)
-#     # # dino_x = 30
-#     # win32api.SetCursorPos()
-#     # for cactus in cacti:
-#     #     cactus_pos = pyautogui.locateOnScreen(
-#     #         cactus, region=apr_region, grayscale=True, confidence=0.8
-#     #     )
-#     #     if cactus_pos != None:
-#     #         cactus_x, cactus_y, w, h = cactus_pos
-#     #         cacti_x.append(cactus_x)
-#     # print(f"cacti found:{len(cacti_x)}")
-#     # for cx in cacti_x:
-#     #     if cx - dino_x < 160:
-#     #         print("jump!")
-#     #         pyautogui.press("up")
+if __name__ == "__main__":
+    run()
